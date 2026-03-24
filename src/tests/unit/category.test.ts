@@ -55,3 +55,40 @@ describe("Fase 1 - getActiveLeafPaths", () => {
     expect(result).toEqual(["Electrónica/Celulares"]);
   });
 });
+
+describe("Fase 2 - findCategoryById", () => {
+  const structure = {
+    id: 1,
+    name: "Electrónica",
+    active: true,
+    subcategories: [
+      {
+        id: 2,
+        name: "Computadoras",
+        active: true,
+        subcategories: [
+          { id: 5, name: "Laptops", active: true, subcategories: [] },
+        ],
+      },
+      { id: 3, name: "Celulares", active: true, subcategories: [] },
+    ],
+  };
+
+  it("búsqueda exitosa", () => {
+    const result = service.findCategoryById(structure, 5);
+
+    expect(result).toEqual({
+      node: { id: 5, name: "Laptops", active: true, subcategories: [] },
+      path: "Electrónica/Computadoras/Laptops",
+      depth: 2,
+      parentId: 2,
+      isLeaf: true,
+    });
+  });
+
+  it("búsqueda sin resultado: retorna objeto vacío cuando el id no existe", () => {
+    const result = service.findCategoryById(structure, 99);
+
+    expect(result).toEqual(null);
+  });
+});
