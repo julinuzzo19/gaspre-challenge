@@ -41,7 +41,7 @@ describe("Fase 1 - getActiveLeafPaths", () => {
         {
           id: 2,
           name: "Computadoras",
-          active: false, // rama inactiva
+          active: false,
           subcategories: [
             { id: 5, name: "Laptops", active: true, subcategories: [] },
           ],
@@ -53,6 +53,34 @@ describe("Fase 1 - getActiveLeafPaths", () => {
     const result = service.getActiveLeafPaths(structure);
 
     expect(result).toEqual(["Electrónica/Celulares"]);
+  });
+
+  it("raíz inactiva: no devuelve ninguna ruta", () => {
+    const structure = {
+      id: 1,
+      name: "Electrónica",
+      active: false,
+      subcategories: [
+        { id: 2, name: "Celulares", active: true, subcategories: [] },
+      ],
+    };
+
+    const result = service.getActiveLeafPaths(structure);
+
+    expect(result).toBeUndefined();
+  });
+
+  it("nodo raíz hoja activo: devuelve solo su nombre como ruta", () => {
+    const structure = {
+      id: 1,
+      name: "Solo",
+      active: true,
+      subcategories: [],
+    };
+
+    const result = service.getActiveLeafPaths(structure);
+
+    expect(result).toEqual(["Solo"]);
   });
 });
 
@@ -74,7 +102,7 @@ describe("Fase 2 - findCategoryById", () => {
     ],
   };
 
-  it("búsqueda exitosa", () => {
+  it("búsqueda exitosa: nodo hoja en profundidad 2", () => {
     const result = service.findCategoryById(structure, 5);
 
     expect(result).toEqual({
@@ -86,9 +114,40 @@ describe("Fase 2 - findCategoryById", () => {
     });
   });
 
-  it("búsqueda sin resultado: retorna objeto vacío cuando el id no existe", () => {
+  it("búsqueda exitosa: nodo intermedio (no hoja)", () => {
+    const result = service.findCategoryById(structure, 2);
+
+    expect(result).toEqual({
+      node: {
+        id: 2,
+        name: "Computadoras",
+        active: true,
+        subcategories: [
+          { id: 5, name: "Laptops", active: true, subcategories: [] },
+        ],
+      },
+      path: "Electrónica/Computadoras",
+      depth: 1,
+      parentId: 1,
+      isLeaf: false,
+    });
+  });
+
+  it("búsqueda exitosa: nodo raíz (depth 0, parentId null)", () => {
+    const result = service.findCategoryById(structure, 1);
+
+    expect(result).toEqual({
+      node: structure,
+      path: "Electrónica",
+      depth: 0,
+      parentId: null,
+      isLeaf: false,
+    });
+  });
+
+  it("búsqueda sin resultado: retorna null cuando el id no existe", () => {
     const result = service.findCategoryById(structure, 99);
 
-    expect(result).toEqual(null);
+    expect(result).toBeNull();
   });
 });
