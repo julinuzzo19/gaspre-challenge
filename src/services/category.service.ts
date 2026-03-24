@@ -8,36 +8,31 @@ export class CategoryService {
    * @param paths Es un array de strings que almacena las rutas completas de las categorías hoja activas.
    * @returns Un array de strings que contiene las rutas completas de las categorías hoja activas.
    */
-  public getActiveLeafPaths(
+  public getActiveLeafPaths(category: Category): string[] | undefined {
+    if (!category.active) return undefined;
+
+    const paths: string[] = [];
+    this.collectLeafPaths(category, category.name, paths);
+    return paths.sort();
+  }
+
+  private collectLeafPaths(
     category: Category,
-    currentPath: string = "",
-    paths: string[] = [],
-  ) {
-    try {
-      const newPath = currentPath
-        ? `${currentPath}/${category.name}`
-        : category.name;
+    currentPath: string,
+    paths: string[],
+  ): void {
+    if (!category.active) return;
 
-      // Si la categoría no está activa, no se incluyen sus subcategorías, incluso si estas están activas.
-      if (!category.active) {
-        return;
+    if (category.subcategories.length === 0) {
+      paths.push(currentPath);
+    } else {
+      for (const subcategory of category.subcategories) {
+        this.collectLeafPaths(
+          subcategory,
+          `${currentPath}/${subcategory.name}`,
+          paths,
+        );
       }
-
-      // Si la categoría es una hoja (no tiene subcategorías) y está activa, se agrega su ruta completa a la lista de rutas.
-      if (category.subcategories.length === 0) {
-        paths.push(newPath);
-      } else {
-        // si no es hoja, por cada subcategoría se repite el proceso, concatenando el nombre de la categoría padre a la ruta.
-        for (const subcategory of category.subcategories) {
-          this.getActiveLeafPaths(subcategory, newPath, paths);
-        }
-      }
-
-      // Ordena alfabéticamente las rutas completas
-      return paths.sort();
-    } catch (error) {
-      console.log({ error });
-      throw new Error("Error al obtener las rutas de categorías activas");
     }
   }
 
