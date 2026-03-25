@@ -160,7 +160,12 @@ export class CategoryService {
         });
       }
 
-      // INVALID_SUBCATEGORIES: Validar que el nodo raíz tenga un array de subcategorías válido y que no contenga nodos null o undefined
+      // contadores — el nodo existe independientemente de sus subcategorías
+      report.totalValid++;
+      report.maxDepth = Math.max(report.maxDepth, depth);
+      node.active ? report.activeCount++ : report.inactiveCount++;
+
+      // INVALID_SUBCATEGORIES: subcategories no es array, no se puede descender
       if (!Array.isArray(node.subcategories)) {
         report.anomalies.push({
           detail: `Subcategorías inválidas: ${path}`,
@@ -181,11 +186,6 @@ export class CategoryService {
           partialPath: path,
         });
       }
-
-      // contadores
-      report.totalValid++;
-      report.maxDepth = Math.max(report.maxDepth, depth);
-      node.active ? report.activeCount++ : report.inactiveCount++;
 
       if (node.subcategories.length === 0 && node.active) {
         report.leafPaths.push(path);
