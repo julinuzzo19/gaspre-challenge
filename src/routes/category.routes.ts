@@ -13,6 +13,7 @@ const categoriesController = new CategoryController(categoriesService);
 // Definicion de rutas
 
 router.get("/", categoriesController.getActiveLeafPaths.bind(categoriesController));
+router.get("/analyze", categoriesController.analyzeCategoryTree.bind(categoriesController));
 router.get("/:id", categoriesController.findCategoryById.bind(categoriesController));
 
 export default router;

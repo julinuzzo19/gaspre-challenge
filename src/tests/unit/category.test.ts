@@ -1,4 +1,5 @@
 import { CategoryService } from "../../services/category.service";
+import { MALFORMED_DATA } from "../../repositories/mock/malformed-data";
 
 const service = new CategoryService();
 
@@ -149,5 +150,80 @@ describe("Fase 2 - findCategoryById", () => {
     const result = service.findCategoryById(structure, 99);
 
     expect(result).toBeNull();
+  });
+});
+
+describe("Fase 3 - analyzeCategoryTree", () => {
+  it("estructura válida: contadores correctos y rutas de hojas activas", () => {
+    const structure = {
+      id: 1,
+      name: "Raíz",
+      active: true,
+      subcategories: [
+        { id: 2, name: "Activo", active: true, subcategories: [] },
+        { id: 3, name: "Inactivo", active: false, subcategories: [] },
+      ],
+    };
+
+    const result = service.analyzeCategoryTree(structure);
+
+    expect(result.anomalies).toHaveLength(0);
+    expect(result.totalValid).toBe(3);
+    expect(result.activeCount).toBe(2);
+    expect(result.inactiveCount).toBe(1);
+    expect(result.maxDepth).toBe(1);
+    expect(result.leafPaths).toEqual(["Raíz/Activo"]);
+  });
+
+  it("INVALID_ID: reporta anomalía cuando el id no es número", () => {
+    const result = service.analyzeCategoryTree(MALFORMED_DATA);
+
+    const invalidId = result.anomalies.find((a) => a.code === "INVALID_ID");
+    expect(invalidId).toBeDefined();
+  });
+
+  it("INVALID_NAME: reporta anomalía cuando el nombre es vacío o solo espacios", () => {
+    const result = service.analyzeCategoryTree(MALFORMED_DATA);
+
+    const invalidNames = result.anomalies.filter(
+      (a) => a.code === "INVALID_NAME",
+    );
+    expect(invalidNames.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it("INVALID_SUBCATEGORIES: reporta anomalía cuando subcategories no es array", () => {
+    const result = service.analyzeCategoryTree(MALFORMED_DATA);
+
+    const invalidSubs = result.anomalies.find(
+      (a) => a.code === "INVALID_SUBCATEGORIES",
+    );
+    expect(invalidSubs).toBeDefined();
+    expect(invalidSubs?.id).toBe(4);
+  });
+
+  it("DUPLICATE_ID: reporta anomalía cuando dos nodos tienen el mismo id", () => {
+    const result = service.analyzeCategoryTree(MALFORMED_DATA);
+
+    const duplicate = result.anomalies.find((a) => a.code === "DUPLICATE_ID");
+    expect(duplicate).toBeDefined();
+    expect(duplicate?.id).toBe(6);
+  });
+
+  it("CYCLE_DETECTED: reporta anomalía y no entra en loop infinito", () => {
+    const result = service.analyzeCategoryTree(MALFORMED_DATA);
+
+    const cycle = result.anomalies.find((a) => a.code === "CYCLE_DETECTED");
+    expect(cycle).toBeDefined();
+  });
+
+  it("NULL_CHILD: reporta anomalía cuando un hijo es null", () => {
+    const result = service.analyzeCategoryTree(MALFORMED_DATA);
+
+    const nullChild = result.anomalies.find(
+      (a) =>
+        (a.code === "NULL_CHILD" || a.code === "INVALID_NODE") &&
+        a.partialPath?.includes("Con hijo nulo"),
+    );
+    expect(nullChild).toBeDefined();
   });
 });
